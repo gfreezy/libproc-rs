@@ -1,12 +1,9 @@
-extern crate libc;
-extern crate errno;
+use libc::c_int;
 
-use self::libc::{uint32_t, c_int};
-
-use std::{ptr, mem};
 use std::fmt;
+use std::{mem, ptr};
 
-use libproc::proc_pid;
+use super::proc_pid;
 
 #[cfg(test)]
 use std::io;
@@ -14,42 +11,46 @@ use std::io;
 use std::io::Write;
 
 // See https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/sys/msgbuf.h
-const MAX_MSG_BSIZE : c_int = (1*1024*1024);
-const MSG_MAGIC : c_int = 0x063061;
+const MAX_MSG_BSIZE: c_int = (1 * 1024 * 1024);
+const MSG_MAGIC: c_int = 0x063061;
 
 // See /usr/include/sys/msgbuf.h on your Mac.
 #[repr(C)]
 struct MessageBuffer {
-    pub msg_magic : c_int,
-    pub msg_size : c_int,
-    pub msg_bufx : c_int,      // write pointer
-    pub msg_bufr : c_int,      // read pointer
-    pub msg_bufc : * mut u8     // buffer
+    pub msg_magic: c_int,
+    pub msg_size: c_int,
+    pub msg_bufx: c_int,   // write pointer
+    pub msg_bufr: c_int,   // read pointer
+    pub msg_bufc: *mut u8, // buffer
 }
 
 impl Default for MessageBuffer {
     fn default() -> MessageBuffer {
         MessageBuffer {
-            msg_magic : 0,
-            msg_size : 0,
-            msg_bufx : 0,
-            msg_bufr : 0,
-            msg_bufc : ptr::null_mut() as * mut u8
+            msg_magic: 0,
+            msg_size: 0,
+            msg_bufx: 0,
+            msg_bufr: 0,
+            msg_bufc: ptr::null_mut() as *mut u8,
         }
     }
 }
 
 impl fmt::Debug for MessageBuffer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MessageBuffer {{ magic: 0x{:x}, size: {}, bufx: {}}}", self.msg_magic, self.msg_size, self.msg_bufx)
+        write!(
+            f,
+            "MessageBuffer {{ magic: 0x{:x}, size: {}, bufx: {}}}",
+            self.msg_magic, self.msg_size, self.msg_bufx
+        )
     }
 }
 
 // this extern block links to the libproc library
 // Original signatures of functions can be found at http://opensource.apple.com/source/Libc/Libc-594.9.4/darwin/libproc.c
 #[link(name = "proc", kind = "dylib")]
-extern {
-    fn proc_kmsgbuf(buffer : *mut MessageBuffer, buffersize : uint32_t) -> c_int;
+extern "C" {
+    fn proc_kmsgbuf(buffer: *mut MessageBuffer, buffersize: u32) -> c_int;
 }
 
 /// Get upto buffersize bytes from the the kernel message buffer - as used by dmesg
@@ -71,7 +72,7 @@ extern {
 ///     }
 // See http://opensource.apple.com//source/system_cmds/system_cmds-336.6/dmesg.tproj/dmesg.c
 pub fn kmsgbuf() -> Result<String, String> {
-    let mut message_buffer : MessageBuffer = Default::default();
+    let mut message_buffer: MessageBuffer = Default::default();
     let ret: i32;
 
     unsafe {
@@ -80,26 +81,32 @@ pub fn kmsgbuf() -> Result<String, String> {
 
     if ret <= 0 {
         Err(proc_pid::get_errno_with_message(ret))
-    } else
-    {
+    } else {
         if message_buffer.msg_magic != MSG_MAGIC {
             println!("Message buffer: {:?}", message_buffer);
-            Err(format!("The magic number 0x{:x} is incorrect", message_buffer.msg_magic))
+            Err(format!(
+                "The magic number 0x{:x} is incorrect",
+                message_buffer.msg_magic
+            ))
         } else {
             // Avoid starting beyond the end of the buffer
             if message_buffer.msg_bufx >= MAX_MSG_BSIZE {
                 message_buffer.msg_bufx = 0;
             }
-            let mut output : Vec<u8> = Vec::new();
+            let mut output: Vec<u8> = Vec::new();
 
             // The message buffer is circular; start at the read pointer, and go to the write pointer - 1.
             unsafe {
-                let mut ch : u8;
-//                let newl : bool = false;
-//                let skip : bool = false;
-                let mut p : * mut u8 = message_buffer.msg_bufc.offset(message_buffer.msg_bufx as isize);
-                let ep : * mut u8 = message_buffer.msg_bufc.offset((message_buffer.msg_bufx - 1) as isize);
-//                let buf : [u8; 5];
+                let mut ch: u8;
+                //                let newl : bool = false;
+                //                let skip : bool = false;
+                let mut p: *mut u8 = message_buffer
+                    .msg_bufc
+                    .offset(message_buffer.msg_bufx as isize);
+                let ep: *mut u8 = message_buffer
+                    .msg_bufc
+                    .offset((message_buffer.msg_bufx - 1) as isize);
+                //                let buf : [u8; 5];
 
                 while p != ep {
                     // If at the end, then loop around to the start
@@ -111,32 +118,32 @@ pub fn kmsgbuf() -> Result<String, String> {
                     ch = *p;
 
                     /* Skip "\n<.*>" syslog sequences.
-                    if skip {
-                        if ch == '>' {
-                            newl = skip = false;
-                        }
-                        continue;
-                    }
+                                        if skip {
+                                            if ch == '>' {
+                                                newl = skip = false;
+                                            }
+                                            continue;
+                                        }
 
-                    if newl && ch == '<' {
-                        skip = true;
-                        continue;
-                    }
+                                        if newl && ch == '<' {
+                                            skip = true;
+                                            continue;
+                                        }
 
-                    if ch == '\0' {
-                        continue;
-                    }
+                                        if ch == '\0' {
+                                            continue;
+                                        }
 
-                    newl = ch == '\n';
+                                        newl = ch == '\n';
 
-//                    (void)vis(buf, ch, 0, 0);
+                    //                    (void)vis(buf, ch, 0, 0);
 
-                    if buf[1] == 0 {
-                        output.append(buf[0]);
-                    } else {
-                        output.append("%s", buf);
-                    }
-                    */
+                                        if buf[1] == 0 {
+                                            output.append(buf[0]);
+                                        } else {
+                                            output.append("%s", buf);
+                                        }
+                                        */
 
                     output.push(ch);
                     p = p.offset(1);
@@ -158,7 +165,7 @@ fn kmessagebuffer_test() {
     if am_root() {
         match kmsgbuf() {
             Ok(buffer) => println!("Buffer: {:?}", buffer),
-            Err(message) => assert!(false, message)
+            Err(message) => assert!(false, message),
         }
     } else {
         writeln!(&mut io::stdout(), "test libproc::kmesg_buffer::kmessagebuffer_test ... skipped as it needs to be run as root").unwrap();
