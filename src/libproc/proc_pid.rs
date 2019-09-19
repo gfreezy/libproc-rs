@@ -49,24 +49,39 @@ pub trait PIDInfo: Default {
 #[repr(C)]
 #[derive(Default)]
 pub struct TaskInfo {
-    pub pti_virtual_size: u64,  // virtual memory size (bytes)
-    pub pti_resident_size: u64, // resident memory size (bytes)
-    pub pti_total_user: u64,    // total time
+    pub pti_virtual_size: u64,
+    // virtual memory size (bytes)
+    pub pti_resident_size: u64,
+    // resident memory size (bytes)
+    pub pti_total_user: u64,
+    // total time
     pub pti_total_system: u64,
-    pub pti_threads_user: u64, // existing threads only
+    pub pti_threads_user: u64,
+    // existing threads only
     pub pti_threads_system: u64,
-    pub pti_policy: i32,            // default policy for new threads
-    pub pti_faults: i32,            // number of page faults
-    pub pti_pageins: i32,           // number of actual pageins
-    pub pti_cow_faults: i32,        // number of copy-on-write faults
-    pub pti_messages_sent: i32,     // number of messages sent
-    pub pti_messages_received: i32, // number of messages received
-    pub pti_syscalls_mach: i32,     // number of mach system calls
-    pub pti_syscalls_unix: i32,     // number of unix system calls
-    pub pti_csw: i32,               // number of context switches
-    pub pti_threadnum: i32,         // number of threads in the task
-    pub pti_numrunning: i32,        // number of running threads
-    pub pti_priority: i32,          // task priority
+    pub pti_policy: i32,
+    // default policy for new threads
+    pub pti_faults: i32,
+    // number of page faults
+    pub pti_pageins: i32,
+    // number of actual pageins
+    pub pti_cow_faults: i32,
+    // number of copy-on-write faults
+    pub pti_messages_sent: i32,
+    // number of messages sent
+    pub pti_messages_received: i32,
+    // number of messages received
+    pub pti_syscalls_mach: i32,
+    // number of mach system calls
+    pub pti_syscalls_unix: i32,
+    // number of unix system calls
+    pub pti_csw: i32,
+    // number of context switches
+    pub pti_threadnum: i32,
+    // number of threads in the task
+    pub pti_numrunning: i32,
+    // number of running threads
+    pub pti_priority: i32, // task priority
 }
 
 impl PIDInfo for TaskInfo {
@@ -78,7 +93,8 @@ impl PIDInfo for TaskInfo {
 #[repr(C)]
 #[derive(Default)]
 pub struct BSDInfo {
-    pub pbi_flags: u32, // 64bit; emulated etc
+    pub pbi_flags: u32,
+    // 64bit; emulated etc
     pub pbi_status: u32,
     pub pbi_xstatus: u32,
     pub pbi_pid: u32,
@@ -89,14 +105,18 @@ pub struct BSDInfo {
     pub pbi_rgid: gid_t,
     pub pbi_svuid: uid_t,
     pub pbi_svgid: gid_t,
-    pub rfu_1: u32, // reserved
+    pub rfu_1: u32,
+    // reserved
     pub pbi_comm: [c_char; MAXCOMLEN],
-    pub pbi_name: [c_char; 2 * MAXCOMLEN], // empty if no name is registered
+    pub pbi_name: [c_char; 2 * MAXCOMLEN],
+    // empty if no name is registered
     pub pbi_nfiles: u32,
     pub pbi_pgid: u32,
     pub pbi_pjobc: u32,
-    pub e_tdev: u32,  // controlling tty dev
-    pub e_tpgid: u32, // tty process group id
+    pub e_tdev: u32,
+    // controlling tty dev
+    pub e_tpgid: u32,
+    // tty process group id
     pub pbi_nice: i32,
     pub pbi_start_tvsec: u64,
     pub pbi_start_tvusec: u64,
@@ -123,16 +143,26 @@ impl PIDInfo for TaskAllInfo {
 
 #[repr(C)]
 pub struct ThreadInfo {
-    pub pth_user_time: u64,                    // user run time
-    pub pth_system_time: u64,                  // system run time
-    pub pth_cpu_usage: i32,                    // scaled cpu usage percentage
-    pub pth_policy: i32,                       // scheduling policy in effect
-    pub pth_run_state: i32,                    // run state (see below)
-    pub pth_flags: i32,                        // various flags (see below)
-    pub pth_sleep_time: i32,                   // number of seconds that thread
-    pub pth_curpri: i32,                       // cur priority
-    pub pth_priority: i32,                     // priority
-    pub pth_maxpriority: i32,                  // max priority
+    pub pth_user_time: u64,
+    // user run time
+    pub pth_system_time: u64,
+    // system run time
+    pub pth_cpu_usage: i32,
+    // scaled cpu usage percentage
+    pub pth_policy: i32,
+    // scheduling policy in effect
+    pub pth_run_state: i32,
+    // run state (see below)
+    pub pth_flags: i32,
+    // various flags (see below)
+    pub pth_sleep_time: i32,
+    // number of seconds that thread
+    pub pth_curpri: i32,
+    // cur priority
+    pub pth_priority: i32,
+    // priority
+    pub pth_maxpriority: i32,
+    // max priority
     pub pth_name: [c_char; MAXTHREADNAMESIZE], // thread name, if any
 }
 
@@ -162,10 +192,13 @@ impl Default for ThreadInfo {
 
 #[derive(Default)]
 pub struct WorkQueueInfo {
-    pub pwq_nthreads: u32,       // total number of workqueue threads
-    pub pwq_runthreads: u32,     // total number of running workqueue threads
-    pub pwq_blockedthreads: u32, // total number of blocked workqueue threads
-    pub reserved: [u32; 1],      // reserved for future use
+    pub pwq_nthreads: u32,
+    // total number of workqueue threads
+    pub pwq_runthreads: u32,
+    // total number of running workqueue threads
+    pub pwq_blockedthreads: u32,
+    // total number of blocked workqueue threads
+    pub reserved: [u32; 1], // reserved for future use
 }
 
 impl PIDInfo for WorkQueueInfo {
@@ -176,28 +209,41 @@ impl PIDInfo for WorkQueueInfo {
 
 // From http://opensource.apple.com/source/xnu/xnu-1504.7.4/bsd/kern/proc_info.c
 pub enum PidInfoFlavor {
-    ListFDs = 1,     // list of ints?
-    TaskAllInfo = 2, // struct proc_taskallinfo
-    TBSDInfo = 3,    // struct proc_bsdinfo
-    TaskInfo = 4,    // struct proc_taskinfo
-    ThreadInfo = 5,  // struct proc_threadinfo
-    ListThreads = 6, // list if int thread ids
+    ListFDs = 1,
+    // list of ints?
+    TaskAllInfo = 2,
+    // struct proc_taskallinfo
+    TBSDInfo = 3,
+    // struct proc_bsdinfo
+    TaskInfo = 4,
+    // struct proc_taskinfo
+    ThreadInfo = 5,
+    // struct proc_threadinfo
+    ListThreads = 6,
+    // list if int thread ids
     RegionInfo = 7,
-    RegionPathInfo = 8,  // string?
-    VNodePathInfo = 9,   // string?
-    ThreadPathInfo = 10, // String?
-    PathInfo = 11,       // String
-    WorkQueueInfo = 12,  // struct proc_workqueueinfo
+    RegionPathInfo = 8,
+    // string?
+    VNodePathInfo = 9,
+    // string?
+    ThreadPathInfo = 10,
+    // String?
+    PathInfo = 11,
+    // String
+    WorkQueueInfo = 12, // struct proc_workqueueinfo
 }
 
 pub enum PidInfo {
-    ListFDs(Vec<i32>), // File Descriptors used by Process
+    ListFDs(Vec<i32>),
+    // File Descriptors used by Process
     TaskAllInfo(TaskAllInfo),
     TBSDInfo(BSDInfo),
     TaskInfo(TaskInfo),
     ThreadInfo(ThreadInfo),
-    ListThreads(Vec<i32>), // thread ids
-    RegionInfo(String),    // String??
+    ListThreads(Vec<i32>),
+    // thread ids
+    RegionInfo(String),
+    // String??
     RegionPathInfo(String),
     VNodePathInfo(String),
     ThreadPathInfo(String),
@@ -256,16 +302,16 @@ extern "C" {
 /// use std::io::Write;
 /// use libproc::libproc::proc_pid;
 ///
-/// match proc_pid::listpids(proc_pid::ProcType::ProcAllPIDS) {
+/// match proc_pid::listpids(proc_pid::ProcType::ProcAllPIDS, 0) {
 ///     Ok(pids) => {
 ///         assert!(pids.len() > 1);
 ///         println!("Found {} processes using listpids()", pids.len());
-///     },
+///     }
 ///     Err(err) => assert!(false, "Error listing pids")
 /// }
 /// ```
-pub fn listpids(proc_types: ProcType) -> Result<Vec<u32>> {
-    let buffer_size = unsafe { proc_listpids(proc_types as u32, 0, ptr::null_mut(), 0) };
+pub fn listpids(proc_types: ProcType, info: u32) -> Result<Vec<u32>> {
+    let buffer_size = unsafe { proc_listpids(proc_types as u32, info, ptr::null_mut(), 0) };
     if buffer_size <= 0 {
         return Err(std::io::Error::from_raw_os_error(buffer_size));
     }
@@ -274,7 +320,7 @@ pub fn listpids(proc_types: ProcType) -> Result<Vec<u32>> {
     let mut pids: Vec<u32> = Vec::with_capacity(capacity);
     let buffer_ptr = pids.as_mut_ptr() as *mut c_void;
 
-    let ret = unsafe { proc_listpids(proc_types as u32, 0, buffer_ptr, buffer_size as u32) };
+    let ret = unsafe { proc_listpids(proc_types as u32, info, buffer_ptr, buffer_size as u32) };
 
     if ret <= 0 {
         Err(std::io::Error::from_raw_os_error(ret))
@@ -287,17 +333,6 @@ pub fn listpids(proc_types: ProcType) -> Result<Vec<u32>> {
         }
 
         Ok(pids)
-    }
-}
-
-#[test]
-fn listpids_test() {
-    match listpids(ProcType::ProcAllPIDS) {
-        Ok(pids) => {
-            assert!(pids.len() > 1);
-            println!("Found {} processes using listpids()", pids.len());
-        }
-        Err(err) => assert!(false, "Error listing pids: {}", err),
     }
 }
 
@@ -342,17 +377,6 @@ pub fn pidinfo<T: PIDInfo>(pid: i32, arg: u64) -> Result<T> {
     }
 }
 
-#[test]
-fn pidinfo_test() {
-    use std::process;
-    let pid = process::id() as i32;
-
-    match pidinfo::<BSDInfo>(pid, 0) {
-        Ok(info) => assert_eq!(info.pbi_pid as i32, pid),
-        Err(err) => assert!(false, "Error retrieving process info: {}", err),
-    };
-}
-
 pub fn regionfilename(pid: i32, address: u64) -> Result<String> {
     let mut regionfilenamebuf: Vec<u8> = Vec::with_capacity(PROC_PIDPATHINFO_MAXSIZE - 1);
     let buffer_ptr = regionfilenamebuf.as_mut_ptr() as *mut c_void;
@@ -377,19 +401,6 @@ pub fn regionfilename(pid: i32, address: u64) -> Result<String> {
                 format!("Invalid UTF-8 sequence: {}", e),
             )),
         }
-    }
-}
-
-#[test]
-// This checks that it can find the regionfilename of the region at address 0, of the init process with PID 1
-fn regionfilename_test() {
-    match regionfilename(1, 0) {
-        // run tests with 'cargo test -- --nocapture' to see the test output
-        Ok(regionfilename) => println!(
-            "Region Filename (at address = 0) of init process PID = 1 is '{}'",
-            regionfilename
-        ),
-        Err(message) => assert!(true, message),
     }
 }
 
@@ -420,31 +431,6 @@ pub fn pidpath(pid: i32) -> Result<String> {
     }
 }
 
-#[test]
-// This checks that it can find the path of the init process with PID 1
-fn pidpath_test_init_pid() {
-    match pidpath(1) {
-        // run tests with 'cargo test -- --nocapture' to see the test output
-        Ok(path) => println!("Path of init process with PID = 1 is '{}'", path),
-        Err(message) => assert!(false, message),
-    }
-}
-
-#[test]
-#[should_panic]
-// This checks that it cannot find the path of the process with pid -1
-fn pidpath_test_unknown_pid() {
-    match pidpath(-1) {
-        // run tests with 'cargo test -- --nocapture' to see the test output
-        Ok(path) => assert!(
-            false,
-            "It found the path of process Pwith ID = -1 (path = {}), that's not possible\n",
-            path
-        ),
-        Err(message) => assert!(false, message),
-    }
-}
-
 /// Returns the major and minor version numbers of the native librproc library being used
 ///
 /// # Examples
@@ -472,17 +458,6 @@ pub fn libversion() -> Result<(i32, i32)> {
         Ok((major, minor))
     } else {
         Err(std::io::Error::from_raw_os_error(ret))
-    }
-}
-
-#[test]
-fn libversion_test() {
-    match libversion() {
-        Ok((major, minor)) => {
-            // run tests with 'cargo test -- --nocapture' to see the test output
-            println!("Major = {}, Minor = {}", major, minor);
-        }
-        Err(message) => assert!(false, message),
     }
 }
 
@@ -523,17 +498,6 @@ pub fn name(pid: i32) -> Result<String> {
                 format!("Invalid UTF-8 sequence: {}", e),
             )),
         }
-    }
-}
-
-#[test]
-// error: Process didn't exit successfully: `/Users/andrew/workspace/libproc-rs/target/debug/libproc-503ad0ba07eb6318` (signal: 11, SIGSEGV: invalid memory reference)
-// This checks that it can find the name of the init process with PID 1
-fn name_test_init_pid() {
-    match pidpath(1) {
-        // run tests with 'cargo test -- --nocapture' to see the test output
-        Ok(path) => println!("Name of init process PID = 1 is '{}'", path),
-        Err(message) => assert!(true, message),
     }
 }
 
@@ -593,26 +557,6 @@ pub fn listpidinfo<T: ListPIDInfo>(pid: i32, max_len: usize) -> Result<Vec<T::It
         buffer.truncate(actual_len);
         Ok(buffer)
     }
-}
-
-#[test]
-fn listpidinfo_test() {
-    use std::process;
-    let pid = process::id() as i32;
-
-    match pidinfo::<TaskAllInfo>(pid, 0) {
-        Ok(info) => {
-            match listpidinfo::<ListThreads>(pid, info.ptinfo.pti_threadnum as usize) {
-                Ok(threads) => assert!(threads.len() > 0),
-                Err(err) => assert!(false, "Error retrieving process info: {}", err),
-            }
-            match listpidinfo::<ListFDs>(pid, info.pbsd.pbi_nfiles as usize) {
-                Ok(fds) => assert!(fds.len() > 0),
-                Err(err) => assert!(false, "Error retrieving process info: {}", err),
-            }
-        }
-        Err(err) => assert!(false, "Error retrieving process info: {}", err),
-    };
 }
 
 pub struct ListThreads;
@@ -726,11 +670,11 @@ pub trait PIDFDInfo: Default {
 ///                                     addr |= s_addr << 24 & 0xff000000;
 ///
 ///                                     println!("{}.{}.{}.{}:{}", addr >> 24 & 0xff, addr >> 16 & 0xff, addr >> 8 & 0xff, addr & 0xff, port);
-///                                 },
+///                                 }
 ///                                 _ => (),
 ///                             }
 ///                         }
-///                     },
+///                     }
 ///                     _ => (),
 ///                 }
 ///             }
@@ -754,34 +698,6 @@ pub fn pidfdinfo<T: PIDFDInfo>(pid: i32, fd: i32) -> Result<T> {
         Err(std::io::Error::from_raw_os_error(ret))
     } else {
         Ok(pidinfo)
-    }
-}
-
-#[test]
-fn pidfdinfo_test() {
-    use std::net::TcpListener;
-    use std::process;
-    let pid = process::id() as i32;
-
-    let _listener = TcpListener::bind("127.0.0.1:65535");
-
-    let info = pidinfo::<BSDInfo>(pid, 0).unwrap();
-    let fds = listpidinfo::<ListFDs>(pid, info.pbi_nfiles as usize).unwrap();
-    for fd in fds {
-        match fd.proc_fdtype.into() {
-            ProcFDType::Socket => {
-                let socket = pidfdinfo::<SocketFDInfo>(pid, fd.proc_fd).unwrap();
-                match socket.psi.soi_kind.into() {
-                    SocketInfoKind::Tcp => unsafe {
-                        let info = socket.psi.soi_proto.pri_tcp;
-                        assert_eq!(socket.psi.soi_protocol, libc::IPPROTO_TCP);
-                        assert_eq!(info.tcpsi_ini.insi_lport as u32, 65535);
-                    },
-                    _ => (),
-                }
-            }
-            _ => (),
-        }
     }
 }
 
@@ -1114,6 +1030,153 @@ impl Default for KernCtlInfo {
             kcsi_sendbufsize: 0,
             kcsi_unit: 0,
             kcsi_name: [0; MAX_KCTL_NAME],
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn listpids_test() {
+        match listpids(ProcType::ProcAllPIDS, 0) {
+            Ok(pids) => {
+                assert!(pids.len() > 1);
+                println!("Found {} processes using listpids()", pids.len());
+            }
+            Err(err) => assert!(false, "Error listing pids: {}", err),
+        }
+    }
+
+    #[test]
+    fn listpids_uid_test() {
+        let uid = unsafe { libc::getuid() };
+        match listpids(ProcType::ProcUIDOnly, uid) {
+            Ok(pids) => {
+                assert!(pids.len() > 2);
+                println!("Found {} processes using listpids(uid)", pids.len());
+            }
+            Err(err) => assert!(false, "Error listing pids: {}", err),
+        }
+    }
+
+    #[test]
+    fn pidinfo_test() {
+        use std::process;
+        let pid = process::id() as i32;
+
+        match pidinfo::<BSDInfo>(pid, 0) {
+            Ok(info) => assert_eq!(info.pbi_pid as i32, pid),
+            Err(err) => assert!(false, "Error retrieving process info: {}", err),
+        };
+    }
+
+    #[test]
+    // This checks that it can find the regionfilename of the region at address 0, of the init process with PID 1
+    fn regionfilename_test() {
+        match regionfilename(1, 0) {
+            // run tests with 'cargo test -- --nocapture' to see the test output
+            Ok(regionfilename) => println!(
+                "Region Filename (at address = 0) of init process PID = 1 is '{}'",
+                regionfilename
+            ),
+            Err(message) => assert!(true, message),
+        }
+    }
+
+    #[test]
+    // This checks that it can find the path of the init process with PID 1
+    fn pidpath_test_init_pid() {
+        match pidpath(1) {
+            // run tests with 'cargo test -- --nocapture' to see the test output
+            Ok(path) => println!("Path of init process with PID = 1 is '{}'", path),
+            Err(message) => assert!(false, message),
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    // This checks that it cannot find the path of the process with pid -1
+    fn pidpath_test_unknown_pid() {
+        match pidpath(-1) {
+            // run tests with 'cargo test -- --nocapture' to see the test output
+            Ok(path) => assert!(
+                false,
+                "It found the path of process Pwith ID = -1 (path = {}), that's not possible\n",
+                path
+            ),
+            Err(message) => assert!(false, message),
+        }
+    }
+
+    #[test]
+    fn libversion_test() {
+        match libversion() {
+            Ok((major, minor)) => {
+                // run tests with 'cargo test -- --nocapture' to see the test output
+                println!("Major = {}, Minor = {}", major, minor);
+            }
+            Err(message) => assert!(false, message),
+        }
+    }
+
+    #[test]
+    // error: Process didn't exit successfully: `/Users/andrew/workspace/libproc-rs/target/debug/libproc-503ad0ba07eb6318` (signal: 11, SIGSEGV: invalid memory reference)
+    // This checks that it can find the name of the init process with PID 1
+    fn name_test_init_pid() {
+        match pidpath(1) {
+            // run tests with 'cargo test -- --nocapture' to see the test output
+            Ok(path) => println!("Name of init process PID = 1 is '{}'", path),
+            Err(message) => assert!(true, message),
+        }
+    }
+
+    #[test]
+    fn listpidinfo_test() {
+        use std::process;
+        let pid = process::id() as i32;
+
+        match pidinfo::<TaskAllInfo>(pid, 0) {
+            Ok(info) => {
+                match listpidinfo::<ListThreads>(pid, info.ptinfo.pti_threadnum as usize) {
+                    Ok(threads) => assert!(threads.len() > 0),
+                    Err(err) => assert!(false, "Error retrieving process info: {}", err),
+                }
+                match listpidinfo::<ListFDs>(pid, info.pbsd.pbi_nfiles as usize) {
+                    Ok(fds) => assert!(fds.len() > 0),
+                    Err(err) => assert!(false, "Error retrieving process info: {}", err),
+                }
+            }
+            Err(err) => assert!(false, "Error retrieving process info: {}", err),
+        };
+    }
+
+    #[test]
+    fn pidfdinfo_test() {
+        use std::net::TcpListener;
+        use std::process;
+        let pid = process::id() as i32;
+
+        let _listener = TcpListener::bind("127.0.0.1:65535");
+
+        let info = pidinfo::<BSDInfo>(pid, 0).unwrap();
+        let fds = listpidinfo::<ListFDs>(pid, info.pbi_nfiles as usize).unwrap();
+        for fd in fds {
+            match fd.proc_fdtype.into() {
+                ProcFDType::Socket => {
+                    let socket = pidfdinfo::<SocketFDInfo>(pid, fd.proc_fd).unwrap();
+                    match socket.psi.soi_kind.into() {
+                        SocketInfoKind::Tcp => unsafe {
+                            let info = socket.psi.soi_proto.pri_tcp;
+                            assert_eq!(socket.psi.soi_protocol, libc::IPPROTO_TCP);
+                            assert_eq!(info.tcpsi_ini.insi_lport as u32, 65535);
+                        },
+                        _ => (),
+                    }
+                }
+                _ => (),
+            }
         }
     }
 }

@@ -41,7 +41,7 @@ fn procinfo(pid: i32) {
         Err(err) => writeln!(&mut std::io::stderr(), "Error: {}", err).unwrap(),
     }
 
-    match proc_pid::listpids(proc_pid::ProcType::ProcAllPIDS) {
+    match proc_pid::listpids(proc_pid::ProcType::ProcAllPIDS, 0) {
         Ok(pids) => {
             println!("There are currently {} processes active", pids.len());
             for pid in pids {
