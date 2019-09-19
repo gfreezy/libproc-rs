@@ -1,9 +1,8 @@
 use libc::c_int;
 
 use std::fmt;
+use std::io::{Error, ErrorKind, Result};
 use std::{mem, ptr};
-
-use super::proc_pid;
 
 #[cfg(test)]
 use std::io;
@@ -71,7 +70,7 @@ extern "C" {
 ///         writeln!(&mut std::io::stderr(), "Must be run as root").unwrap()
 ///     }
 // See http://opensource.apple.com//source/system_cmds/system_cmds-336.6/dmesg.tproj/dmesg.c
-pub fn kmsgbuf() -> Result<String, String> {
+pub fn kmsgbuf() -> Result<String> {
     let mut message_buffer: MessageBuffer = Default::default();
     let ret: i32;
 
@@ -80,13 +79,16 @@ pub fn kmsgbuf() -> Result<String, String> {
     }
 
     if ret <= 0 {
-        Err(proc_pid::get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     } else {
         if message_buffer.msg_magic != MSG_MAGIC {
             println!("Message buffer: {:?}", message_buffer);
-            Err(format!(
-                "The magic number 0x{:x} is incorrect",
-                message_buffer.msg_magic
+            Err(Error::new(
+                ErrorKind::Other,
+                format!(
+                    "The magic number 0x{:x} is incorrect",
+                    message_buffer.msg_magic
+                ),
             ))
         } else {
             // Avoid starting beyond the end of the buffer

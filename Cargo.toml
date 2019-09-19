@@ -9,7 +9,6 @@ license = "MIT"
 edition = "2018"
 
 [dependencies]
-errno = "^0.2"
 libc = "^0.2"
 
 [lib]

@@ -1,8 +1,8 @@
-use errno::errno;
 use libc::{
     c_char, c_int, c_short, c_uchar, c_ushort, c_void, gid_t, in6_addr, in_addr, off_t,
     sockaddr_un, uid_t, IF_NAMESIZE, SOCK_MAXADDRLEN,
 };
+use std::io::{Error, ErrorKind, Result};
 use std::mem;
 use std::ptr;
 
@@ -248,12 +248,6 @@ extern "C" {
     fn proc_libversion(major: *mut c_int, minor: *mut c_int) -> c_int;
 }
 
-pub fn get_errno_with_message(ret: i32) -> String {
-    let e = errno();
-    let code = e.0 as i32;
-    format!("return code = {}, errno = {}, message = '{}'", ret, code, e)
-}
-
 /// Returns the PIDs of the processes active that match the ProcType passed in
 ///
 /// # Examples
@@ -270,10 +264,10 @@ pub fn get_errno_with_message(ret: i32) -> String {
 ///     Err(err) => assert!(false, "Error listing pids")
 /// }
 /// ```
-pub fn listpids(proc_types: ProcType) -> Result<Vec<u32>, String> {
+pub fn listpids(proc_types: ProcType) -> Result<Vec<u32>> {
     let buffer_size = unsafe { proc_listpids(proc_types as u32, 0, ptr::null_mut(), 0) };
     if buffer_size <= 0 {
-        return Err(get_errno_with_message(buffer_size));
+        return Err(std::io::Error::from_raw_os_error(buffer_size));
     }
 
     let capacity = buffer_size as usize / mem::size_of::<u32>();
@@ -283,7 +277,7 @@ pub fn listpids(proc_types: ProcType) -> Result<Vec<u32>, String> {
     let ret = unsafe { proc_listpids(proc_types as u32, 0, buffer_ptr, buffer_size as u32) };
 
     if ret <= 0 {
-        Err(get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     } else {
         let items_count = (ret as usize / mem::size_of::<u32>())
             .checked_sub(1)
@@ -330,7 +324,7 @@ fn listpids_test() {
 /// }
 /// ```
 ///
-pub fn pidinfo<T: PIDInfo>(pid: i32, arg: u64) -> Result<T, String> {
+pub fn pidinfo<T: PIDInfo>(pid: i32, arg: u64) -> Result<T> {
     let flavor = T::flavor() as i32;
     let buffer_size = mem::size_of::<T>() as i32;
     let mut pidinfo = T::default();
@@ -342,7 +336,7 @@ pub fn pidinfo<T: PIDInfo>(pid: i32, arg: u64) -> Result<T, String> {
     };
 
     if ret <= 0 {
-        Err(get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     } else {
         Ok(pidinfo)
     }
@@ -359,7 +353,7 @@ fn pidinfo_test() {
     };
 }
 
-pub fn regionfilename(pid: i32, address: u64) -> Result<String, String> {
+pub fn regionfilename(pid: i32, address: u64) -> Result<String> {
     let mut regionfilenamebuf: Vec<u8> = Vec::with_capacity(PROC_PIDPATHINFO_MAXSIZE - 1);
     let buffer_ptr = regionfilenamebuf.as_mut_ptr() as *mut c_void;
     let buffer_size = regionfilenamebuf.capacity() as u32;
@@ -370,7 +364,7 @@ pub fn regionfilename(pid: i32, address: u64) -> Result<String, String> {
     };
 
     if ret <= 0 {
-        Err(get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     } else {
         unsafe {
             regionfilenamebuf.set_len(ret as usize);
@@ -378,7 +372,10 @@ pub fn regionfilename(pid: i32, address: u64) -> Result<String, String> {
 
         match String::from_utf8(regionfilenamebuf) {
             Ok(regionfilename) => Ok(regionfilename),
-            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
+            Err(e) => Err(Error::new(
+                ErrorKind::Other,
+                format!("Invalid UTF-8 sequence: {}", e),
+            )),
         }
     }
 }
@@ -396,7 +393,7 @@ fn regionfilename_test() {
     }
 }
 
-pub fn pidpath(pid: i32) -> Result<String, String> {
+pub fn pidpath(pid: i32) -> Result<String> {
     let mut pathbuf: Vec<u8> = Vec::with_capacity(PROC_PIDPATHINFO_MAXSIZE - 1);
     let buffer_ptr = pathbuf.as_mut_ptr() as *mut c_void;
     let buffer_size = pathbuf.capacity() as u32;
@@ -407,7 +404,7 @@ pub fn pidpath(pid: i32) -> Result<String, String> {
     };
 
     if ret <= 0 {
-        Err(get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     } else {
         unsafe {
             pathbuf.set_len(ret as usize);
@@ -415,7 +412,10 @@ pub fn pidpath(pid: i32) -> Result<String, String> {
 
         match String::from_utf8(pathbuf) {
             Ok(path) => Ok(path),
-            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
+            Err(e) => Err(Error::new(
+                ErrorKind::Other,
+                format!("Invalid UTF-8 sequence: {}", e),
+            )),
         }
     }
 }
@@ -458,7 +458,7 @@ fn pidpath_test_unknown_pid() {
 ///     Err(err) => writeln!(&mut std::io::stderr(), "Error: {}", err).unwrap()
 /// }
 /// ```
-pub fn libversion() -> Result<(i32, i32), String> {
+pub fn libversion() -> Result<(i32, i32)> {
     let mut major = 0;
     let mut minor = 0;
     let ret: i32;
@@ -471,7 +471,7 @@ pub fn libversion() -> Result<(i32, i32), String> {
     if ret == 0 {
         Ok((major, minor))
     } else {
-        Err(get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     }
 }
 
@@ -499,7 +499,7 @@ fn libversion_test() {
 ///     Err(err) => writeln!(&mut std::io::stderr(), "Error: {}", err).unwrap()
 /// }
 /// ```
-pub fn name(pid: i32) -> Result<String, String> {
+pub fn name(pid: i32) -> Result<String> {
     let mut namebuf: Vec<u8> = Vec::with_capacity(PROC_PIDPATHINFO_MAXSIZE - 1);
     let buffer_ptr = namebuf.as_ptr() as *mut c_void;
     let buffer_size = namebuf.capacity() as u32;
@@ -510,7 +510,7 @@ pub fn name(pid: i32) -> Result<String, String> {
     };
 
     if ret <= 0 {
-        Err(get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     } else {
         unsafe {
             namebuf.set_len(ret as usize);
@@ -518,7 +518,10 @@ pub fn name(pid: i32) -> Result<String, String> {
 
         match String::from_utf8(namebuf) {
             Ok(name) => Ok(name),
-            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
+            Err(e) => Err(Error::new(
+                ErrorKind::Other,
+                format!("Invalid UTF-8 sequence: {}", e),
+            )),
         }
     }
 }
@@ -565,7 +568,7 @@ pub trait ListPIDInfo {
 ///     }
 /// }
 /// ```
-pub fn listpidinfo<T: ListPIDInfo>(pid: i32, max_len: usize) -> Result<Vec<T::Item>, String> {
+pub fn listpidinfo<T: ListPIDInfo>(pid: i32, max_len: usize) -> Result<Vec<T::Item>> {
     assert!(max_len <= PROC_PIDPATHINFO_MAXSIZE);
     let flavor = T::flavor() as i32;
     let buffer_size = mem::size_of::<T::Item>() as i32 * max_len as i32;
@@ -582,7 +585,7 @@ pub fn listpidinfo<T: ListPIDInfo>(pid: i32, max_len: usize) -> Result<Vec<T::It
     };
 
     if ret < 0 {
-        Err(get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     } else if ret == 0 {
         Ok(vec![])
     } else {
@@ -736,7 +739,7 @@ pub trait PIDFDInfo: Default {
 /// }
 /// ```
 ///
-pub fn pidfdinfo<T: PIDFDInfo>(pid: i32, fd: i32) -> Result<T, String> {
+pub fn pidfdinfo<T: PIDFDInfo>(pid: i32, fd: i32) -> Result<T> {
     let flavor = T::flavor() as i32;
     let buffer_size = mem::size_of::<T>() as i32;
     let mut pidinfo = T::default();
@@ -748,7 +751,7 @@ pub fn pidfdinfo<T: PIDFDInfo>(pid: i32, fd: i32) -> Result<T, String> {
     };
 
     if ret <= 0 {
-        Err(get_errno_with_message(ret))
+        Err(std::io::Error::from_raw_os_error(ret))
     } else {
         Ok(pidinfo)
     }
