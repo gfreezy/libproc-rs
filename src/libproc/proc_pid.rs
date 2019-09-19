@@ -313,7 +313,7 @@ extern "C" {
 pub fn listpids(proc_types: ProcType, info: u32) -> Result<Vec<u32>> {
     let buffer_size = unsafe { proc_listpids(proc_types as u32, info, ptr::null_mut(), 0) };
     if buffer_size <= 0 {
-        return Err(std::io::Error::from_raw_os_error(buffer_size));
+        return Err(Error::last_os_error());
     }
 
     let capacity = buffer_size as usize / mem::size_of::<u32>();
@@ -323,7 +323,7 @@ pub fn listpids(proc_types: ProcType, info: u32) -> Result<Vec<u32>> {
     let ret = unsafe { proc_listpids(proc_types as u32, info, buffer_ptr, buffer_size as u32) };
 
     if ret <= 0 {
-        Err(std::io::Error::from_raw_os_error(ret))
+        Err(Error::last_os_error())
     } else {
         let items_count = (ret as usize / mem::size_of::<u32>())
             .checked_sub(1)
@@ -371,7 +371,7 @@ pub fn pidinfo<T: PIDInfo>(pid: i32, arg: u64) -> Result<T> {
     };
 
     if ret <= 0 {
-        Err(std::io::Error::from_raw_os_error(ret))
+        Err(Error::last_os_error())
     } else {
         Ok(pidinfo)
     }
@@ -388,7 +388,7 @@ pub fn regionfilename(pid: i32, address: u64) -> Result<String> {
     };
 
     if ret <= 0 {
-        Err(std::io::Error::from_raw_os_error(ret))
+        Err(Error::last_os_error())
     } else {
         unsafe {
             regionfilenamebuf.set_len(ret as usize);
@@ -415,7 +415,7 @@ pub fn pidpath(pid: i32) -> Result<String> {
     };
 
     if ret <= 0 {
-        Err(std::io::Error::from_raw_os_error(ret))
+        Err(Error::last_os_error())
     } else {
         unsafe {
             pathbuf.set_len(ret as usize);
@@ -457,7 +457,7 @@ pub fn libversion() -> Result<(i32, i32)> {
     if ret == 0 {
         Ok((major, minor))
     } else {
-        Err(std::io::Error::from_raw_os_error(ret))
+        Err(Error::last_os_error())
     }
 }
 
@@ -485,7 +485,7 @@ pub fn name(pid: i32) -> Result<String> {
     };
 
     if ret <= 0 {
-        Err(std::io::Error::from_raw_os_error(ret))
+        Err(Error::last_os_error())
     } else {
         unsafe {
             namebuf.set_len(ret as usize);
@@ -549,7 +549,7 @@ pub fn listpidinfo<T: ListPIDInfo>(pid: i32, max_len: usize) -> Result<Vec<T::It
     };
 
     if ret < 0 {
-        Err(std::io::Error::from_raw_os_error(ret))
+        Err(Error::last_os_error())
     } else if ret == 0 {
         Ok(vec![])
     } else {
@@ -695,7 +695,7 @@ pub fn pidfdinfo<T: PIDFDInfo>(pid: i32, fd: i32) -> Result<T> {
     };
 
     if ret <= 0 {
-        Err(std::io::Error::from_raw_os_error(ret))
+        Err(Error::last_os_error())
     } else {
         Ok(pidinfo)
     }
